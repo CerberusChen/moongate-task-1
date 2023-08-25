@@ -6,6 +6,11 @@ const port = process.env.PORT || "8888";
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
+});
+
 const store: { tasks: Task[] } = {
   tasks: [],
 };
@@ -105,7 +110,7 @@ app.post("/task", (req: Request, res: Response) => {
   }
 });
 
-app.put("/task/:id", (req: Request, res: Response) => {
+app.post("/task/:id", (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const body = req.body;
   if (body.content) {
@@ -113,9 +118,12 @@ app.put("/task/:id", (req: Request, res: Response) => {
       const targetTask = store.tasks.find((task) => task.id === id);
       if (targetTask) {
         targetTask.content = body.content;
+        res.send("OK");
+      } else {
+        res.status(400).send(`Task id: [${id}] cannot be found.`);
       }
     } else {
-      res.status(400).send(`Task id: [${id}] cannot be found.`);
+      res.status(400).send(`Task id: [${id}] is invalid.`);
     }
   } else {
     res.status(400).send("error input! Task must has description.");
